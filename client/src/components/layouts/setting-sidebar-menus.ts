@@ -1,0 +1,95 @@
+import {
+  ApiIcon,
+  ColorsIcon,
+  CreditCardIcon,
+  DatabaseIcon,
+  MegaphoneIcon,
+  Notification01Icon,
+  PlugIcon,
+  ShieldIcon,
+  UserGroupIcon,
+  UserIcon,
+  WebhookIcon,
+} from "@hugeicons/core-free-icons"
+
+export const settingsSidebarMenu = [
+  {
+    title: "Profile",
+    icon: UserIcon,
+    path: "/settings/profile",
+    heading: "Profile",
+    description: "Manage your personal information and account details.",
+  },
+  {
+    title: "Appearance",
+    icon: ColorsIcon,
+    path: "/settings/appearance",
+    heading: "Appearance",
+    description: "Theme, density, and display preferences for your workspace.",
+  },
+  // {
+  //   title: "Webhooks",
+  //   icon: WebhookIcon,
+  //   path: "/settings/webhooks",
+  //   heading: "Webhooks",
+  //   description: "Configure and monitor webhook endpoints and events.",
+  // },
+  // {
+  //   title: "API Key",
+  //   icon: ApiIcon,
+  //   path: "/settings/api-key",
+  //   heading: "API Key",
+  //   description: "Manage and rotate your API keys securely.",
+  // },
+  // {
+  //   title: "Communication",
+  //   icon: MegaphoneIcon,
+  //   path: "/settings/communication",
+  //   heading: "Communication",
+  //   description: "Configure email, SMS, and other communication channels.",
+  // },
+  // {
+  //   title: "Members",
+  //   icon: UserGroupIcon,
+  //   path: "/settings/members",
+  //   heading: "Members",
+  //   description: "Invite teammates, assign roles, and manage workspace access.",
+  // },
+  // {
+  //   title: "Billing",
+  //   icon: CreditCardIcon,
+  //   path: "/settings/billing",
+  //   heading: "Billing",
+  //   description: "View usage, invoices, and manage your subscription.",
+  // },
+  // {
+  //   title: "Security",
+  //   icon: ShieldIcon,
+  //   path: "/settings/security",
+  //   heading: "Security",
+  //   description: "Manage authentication, access control, and security settings.",
+  // },
+  // {
+  //   title: "Notifications",
+  //   icon: Notification01Icon,
+  //   path: "/settings/notifications",
+  //   heading: "Notifications",
+  //   description: "Control alerts, preferences, and notification channels.",
+  // },
+  // {
+  //   title: "Integrations",
+  //   icon: PlugIcon,
+  //   path: "/settings/integrations",
+  //   heading: "Integrations",
+  //   description: "Connect third-party services and manage integrations.",
+  // },
+  // {
+  //   title: "Attributes",
+  //   icon: DatabaseIcon,
+  //   path: "/settings/attributes",
+  //   heading: "Attributes",
+  //   description: "Define and manage custom attributes and metadata.",
+  // },
+] as const
+
+export type SettingsSidebarPath = (typeof settingsSidebarMenu)[number]["path"]
