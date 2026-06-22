@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -40,26 +40,6 @@ function FieldHeading({
   )
 }
 
-function Breadcrumb() {
-  return (
-    <nav
-      aria-label="Breadcrumb"
-      className="text-muted-foreground mb-6 flex flex-wrap items-center gap-1.5 text-sm"
-    >
-      <Link
-        to="/settings/profile"
-        className="hover:text-foreground transition-colors"
-      >
-        User
-      </Link>
-      <span aria-hidden className="text-muted-foreground/80">
-        /
-      </span>
-      <span className="text-foreground font-medium">Profile</span>
-    </nav>
-  )
-}
-
 export default function ProfileSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { data: session, isPending } = useSession()
@@ -73,6 +53,10 @@ export default function ProfileSettings() {
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false)
   const [emailDialogOpen, setEmailDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deletePassword, setDeletePassword] = useState("")
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [hasPasswordAccount, setHasPasswordAccount] = useState(false)
   const [draftPhotoUrl, setDraftPhotoUrl] = useState("")
   const [draftEmail, setDraftEmail] = useState("")
 
@@ -137,6 +121,54 @@ export default function ProfileSettings() {
     if (result.error) return
     navigate("/login")
   }, [navigate])
+
+  const openDeleteDialog = useCallback(async () => {
+    setDeleteError(null)
+    setDeletePassword("")
+
+    const accounts = await authClient.listAccounts()
+    const usesPassword = accounts.data?.some(
+      (account) => account.providerId === "credential"
+    )
+    setHasPasswordAccount(Boolean(usesPassword))
+    setDeleteDialogOpen(true)
+  }, [])
+
+  const handleDeleteAccount = useCallback(async () => {
+    setDeleteError(null)
+    setIsDeleting(true)
+
+    try {
+      const result = hasPasswordAccount
+        ? await authClient.deleteUser({
+            password: deletePassword,
+            callbackURL: `${window.location.origin}/login`,
+          })
+        : await authClient.deleteUser({
+            callbackURL: `${window.location.origin}/login`,
+          })
+
+      if (result.error) {
+        setDeleteError(result.error.message ?? "Failed to delete account")
+        return
+      }
+
+      await authClient.signOut()
+      navigate("/login")
+    } catch {
+      setDeleteError("Something went wrong. Please try again.")
+    } finally {
+      setIsDeleting(false)
+    }
+  }, [deletePassword, hasPasswordAccount, navigate])
+
+  const closeDeleteDialog = useCallback((open: boolean) => {
+    setDeleteDialogOpen(open)
+    if (!open) {
+      setDeletePassword("")
+      setDeleteError(null)
+    }
+  }, [])
 
   if (isPending) {
     return (
@@ -282,7 +314,7 @@ export default function ProfileSettings() {
             variant="outline"
             size="sm"
             className="border-destructive/50 text-destructive hover:bg-destructive/5 hover:text-destructive"
-            onClick={() => setDeleteDialogOpen(true)}
+            onClick={openDeleteDialog}
           >
             Delete account
           </Button>
@@ -376,7 +408,7 @@ export default function ProfileSettings() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <Dialog open={deleteDialogOpen} onOpenChange={closeDeleteDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Delete account</DialogTitle>
@@ -385,16 +417,49 @@ export default function ProfileSettings() {
               This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
+
+          {hasPasswordAccount ? (
+            <div className="grid gap-2 py-2">
+              <label htmlFor="delete-password" className="text-sm font-medium">
+                Confirm your password
+              </label>
+              <Input
+                id="delete-password"
+                type="password"
+                value={deletePassword}
+                onChange={(event) => setDeletePassword(event.target.value)}
+                autoComplete="current-password"
+                placeholder="Enter your password"
+              />
+            </div>
+          ) : (
+            <p className="text-muted-foreground py-2 text-sm">
+              Your account will be deleted, or you may receive a confirmation
+              email if additional verification is required.
+            </p>
+          )}
+
+          {deleteError ? (
+            <p className="text-sm text-red-500">{deleteError}</p>
+          ) : null}
+
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
+              onClick={() => closeDeleteDialog(false)}
             >
               Cancel
             </Button>
-            <Button type="button" variant="destructive">
-              Delete account
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={
+                isDeleting || (hasPasswordAccount && !deletePassword.trim())
+              }
+              onClick={handleDeleteAccount}
+            >
+              {isDeleting ? "Deleting..." : "Delete account"}
             </Button>
           </DialogFooter>
         </DialogContent>

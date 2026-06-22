@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useState } from "react"
+
 import {
   Table,
   TableBody,
@@ -6,64 +8,102 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { authClient } from "@/lib/auth"
 
-const NAMES = [
-  "Production — write",
-  "Analytics read-only",
-  "Staging test",
-  "Partner integration",
-  "Revoked — mobile v1",
-  "CI deploy bot",
-  "Snowflake export",
-  "Zapier connector",
-  "Mobile app — prod",
-  "Support impersonation",
-  "Billing sync",
-  "Webhook ingress",
-  "Datadog monitor",
-  "Load test key",
-  "Sandbox playground",
-  "EU data residency",
-  "Read replica BI",
-  "Lambda ingestion",
-  "Retool internal",
-  "Security scanner",
-] as const
+type ApiKeyRow = {
+  id: string
+  name?: string | null
+  start?: string | null
+  prefix?: string | null
+  enabled?: boolean | null
+  createdAt?: Date | string
+  lastRequest?: Date | string | null
+  metadata?: {
+    environment?: string
+    scopes?: string
+  } | null
+}
 
-const rows = NAMES.map((name, i) => ({
-  id: `settings-api-${i + 1}`,
-  name,
-  prefix: [
-  ][i],
-  scopes: [
-    "events:write, profiles:read",
-    "events:read, segments:read",
-    "events:write",
-    "profiles:read",
-    "—",
-    "deploy:write",
-    "exports:read",
-    "campaigns:read",
-    "events:write, push:send",
-    "users:impersonate",
-    "billing:read",
-    "webhooks:receive",
-    "metrics:read",
-    "events:write",
-    "sandbox:*",
-    "profiles:read (EU)",
-    "events:read",
-    "ingest:batch",
-    "internal:read",
-    "security:scan",
-  ][i],
-  env: (["Prod", "Prod", "Staging", "Prod", "Prod", "Prod", "Prod", "Prod", "Prod", "Prod", "Prod", "Prod", "Prod", "Staging", "Sandbox", "Prod", "Prod", "Prod", "Prod", "Prod"] as const)[i % 8],
-  created: ["Jan 2024", "Mar 2024", "Apr 2025", "Dec 2024", "Jun 2023", "Feb 2025", "Aug 2024", "May 2024", "Sep 2024", "Jan 2025", "Oct 2024", "Nov 2024", "Jul 2024", "Apr 2024", "Jun 2024", "Mar 2025", "Feb 2024", "Dec 2024", "Jan 2024", "Mar 2024"][i],
-  lastUsed: ["2m ago", "1h ago", "3d ago", "30m ago", "—", "5m ago", "4h ago", "1d ago", "10m ago", "—", "45m ago", "2h ago", "15m ago", "—", "1w ago", "20m ago", "6h ago", "8m ago", "12h ago", "3h ago"][i],
-  status: (["Active", "Active", "Active", "Restricted", "Revoked", "Active", "Active", "Active", "Active", "Restricted", "Active", "Active", "Active", "Revoked", "Active", "Active", "Active", "Active", "Active", "Active"] as const)[i],
-}))
+type ApiKeyTableProps = {
+  refreshKey?: number
+}
 
-export function ApiKeyTable() {
+function formatDate(value: Date | string | null | undefined) {
+  if (!value) return "—"
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return "—"
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
+}
+
+function formatLastUsed(value: Date | string | null | undefined) {
+  if (!value) return "—"
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return "—"
+  return date.toLocaleString()
+}
+
+function formatEnvironment(metadata: ApiKeyRow["metadata"]) {
+  const environment = metadata?.environment
+  if (!environment) return "—"
+  if (environment === "prod") return "Prod"
+  if (environment === "staging") return "Staging"
+  if (environment === "sandbox") return "Sandbox"
+  return environment
+}
+
+export function ApiKeyTable({ refreshKey = 0 }: ApiKeyTableProps) {
+  const [rows, setRows] = useState<ApiKeyRow[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const loadKeys = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const result = await authClient.apiKey.list({})
+
+      if (result.error) {
+        setError(result.error.message ?? "Failed to load API keys")
+        setRows([])
+        return
+      }
+
+      setRows(result.data?.apiKeys ?? [])
+    } catch {
+      setError("Failed to load API keys")
+      setRows([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadKeys()
+  }, [loadKeys, refreshKey])
+
+  if (isLoading) {
+    return (
+      <p className="text-muted-foreground text-sm">Loading API keys…</p>
+    )
+  }
+
+  if (error) {
+    return <p className="text-sm text-red-500">{error}</p>
+  }
+
+  if (rows.length === 0) {
+    return (
+      <p className="text-muted-foreground text-sm">
+        No API keys yet. Create one to get started.
+      </p>
+    )
+  }
+
   return (
     <div>
       <div className="bg-background overflow-hidden rounded-md border">
@@ -88,15 +128,27 @@ export function ApiKeyTable() {
                 <TableCell className="text-muted-foreground py-2 text-center tabular-nums">
                   {index + 1}
                 </TableCell>
-                <TableCell className="py-2 font-medium">{row.name}</TableCell>
-                <TableCell className="py-2 font-mono text-xs">{row.prefix}</TableCell>
-                <TableCell className="max-w-[200px] truncate py-2 text-xs">
-                  {row.scopes}
+                <TableCell className="py-2 font-medium">
+                  {row.name || "Untitled key"}
                 </TableCell>
-                <TableCell className="py-2">{row.env}</TableCell>
-                <TableCell className="py-2">{row.created}</TableCell>
-                <TableCell className="py-2">{row.lastUsed}</TableCell>
-                <TableCell className="py-2">{row.status}</TableCell>
+                <TableCell className="py-2 font-mono text-xs">
+                  {row.start ? `${row.start}…` : row.prefix || "—"}
+                </TableCell>
+                <TableCell className="max-w-[200px] truncate py-2 text-xs">
+                  {row.metadata?.scopes || "—"}
+                </TableCell>
+                <TableCell className="py-2">
+                  {formatEnvironment(row.metadata)}
+                </TableCell>
+                <TableCell className="py-2">
+                  {formatDate(row.createdAt)}
+                </TableCell>
+                <TableCell className="py-2">
+                  {formatLastUsed(row.lastRequest)}
+                </TableCell>
+                <TableCell className="py-2">
+                  {row.enabled === false ? "Disabled" : "Active"}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

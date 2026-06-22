@@ -61,17 +61,6 @@ export function LayoutSidebar() {
   const { data: session, isPending } = useSession()
   const user = session?.user
 
-  // go to /new-chat if pathname is /settings on escape key press
-  useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && pathname.includes("/settings")) {
-        navigate("/new-chat")
-      }
-    }
-    window.addEventListener("keydown", handleEscapeKey)
-    return () => window.removeEventListener("keydown", handleEscapeKey)
-  }, [navigate])
-
   const isSettings = pathname.startsWith("/settings")
   const layoutColumns = isSettings
     ? "minmax(0, 2fr) minmax(0, 4fr)"

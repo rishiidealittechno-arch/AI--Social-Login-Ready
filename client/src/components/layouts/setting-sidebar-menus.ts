@@ -1,5 +1,6 @@
 import {
   ApiIcon,
+  Building01Icon,
   ColorsIcon,
   CreditCardIcon,
   DatabaseIcon,
@@ -21,6 +22,13 @@ export const settingsSidebarMenu = [
     description: "Manage your personal information and account details.",
   },
   {
+    title: "Workspace",
+    icon: Building01Icon,
+    path: "/settings/workspace",
+    heading: "Workspace",
+    description: "Manage your workspace name, URL, and active team space.",
+  },
+  {
     title: "Appearance",
     icon: ColorsIcon,
     path: "/settings/appearance",
@@ -34,13 +42,13 @@ export const settingsSidebarMenu = [
   //   heading: "Webhooks",
   //   description: "Configure and monitor webhook endpoints and events.",
   // },
-  // {
-  //   title: "API Key",
-  //   icon: ApiIcon,
-  //   path: "/settings/api-key",
-  //   heading: "API Key",
-  //   description: "Manage and rotate your API keys securely.",
-  // },
+  {
+    title: "API Key",
+    icon: ApiIcon,
+    path: "/settings/api-key",
+    heading: "API Key",
+    description: "Manage and rotate your API keys securely.",
+  },
   // {
   //   title: "Communication",
   //   icon: MegaphoneIcon,
@@ -48,13 +56,20 @@ export const settingsSidebarMenu = [
   //   heading: "Communication",
   //   description: "Configure email, SMS, and other communication channels.",
   // },
-  // {
-  //   title: "Members",
-  //   icon: UserGroupIcon,
-  //   path: "/settings/members",
-  //   heading: "Members",
-  //   description: "Invite teammates, assign roles, and manage workspace access.",
-  // },
+  {
+    title: "Members",
+    icon: UserGroupIcon,
+    path: "/settings/members",
+    heading: "Members",
+    description: "Invite teammates, assign roles, and manage workspace access.",
+  },
+  {
+    title: "Sessions",
+    icon: ShieldIcon,
+    path: "/settings/sessions",
+    heading: "Sessions",
+    description: "View and revoke active sign-in sessions across your devices.",
+  },
   // {
   //   title: "Billing",
   //   icon: CreditCardIcon,

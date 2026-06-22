@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { getPostLoginPath } from "@/components/layouts/auth-guards"
 import { authClient } from "@/lib/auth"
 
 export default function AuthPage() {
   const navigate = useNavigate()
+  const lastMethod = authClient.getLastUsedLoginMethod()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -27,7 +30,7 @@ export default function AuthPage() {
         return
       }
 
-      navigate("/ask-mimo")
+      navigate(await getPostLoginPath())
     } catch {
       setError("Something went wrong. Please try again.")
     } finally {
@@ -42,7 +45,7 @@ export default function AuthPage() {
     try {
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: `${window.location.origin}/ask-mimo`,
+        callbackURL: window.location.origin,
       })
 
       if (result.error) {
@@ -60,9 +63,7 @@ export default function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">
       <div className="grid h-screen w-full grid-cols-1 overflow-hidden md:grid-cols-5">
-        <div className="relative col-span-3 hidden bg-[#171717] p-10 md:block" />
-
-        <div className="relative col-span-2 flex items-center justify-center p-8">
+        <div className="relative col-span-5 flex items-center justify-center p-8">
           <div className="w-full max-w-sm space-y-6">
             <div className="space-y-2 text-center">
               <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
@@ -100,6 +101,11 @@ export default function AuthPage() {
                 className="h-11 w-full bg-white text-black hover:bg-zinc-200"
               >
                 {isLoading ? "Signing in..." : "Sign in with Email"}
+                {lastMethod === "email" ? (
+                  <Badge className="ml-2 bg-black/10 text-black hover:bg-black/10">
+                    Last used
+                  </Badge>
+                ) : null}
               </Button>
             </form>
 
@@ -114,15 +120,36 @@ export default function AuthPage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-2">
             <Button
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              variant="outline"
-              className="h-11 w-full border-white/10 bg-[#171717] text-white hover:bg-[#222]"
+              variant={lastMethod === "google" ? "default" : "outline"}
+              className={
+                "h-11 dark:bg-background  hover:bg-zinc-200"
+              }
             >
-              Google
+              Google 
+              {lastMethod === "google" ? (
+                <Badge variant='secondary' className="ml-2 text-xs hover:bg-black/10">
+                  Last used
+                </Badge>
+              ) : null}
             </Button>
+            <Button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              variant={lastMethod === "google" ? "default" : "outline"}
+              className={
+                "h-11 dark:bg-background  hover:bg-zinc-200"
+              }
+            >
+              Microsoft
+            </Button>
+
+            </div>
 
             <p className="px-8 text-center text-sm text-muted-foreground">
               By clicking continue, you agree to our{" "}

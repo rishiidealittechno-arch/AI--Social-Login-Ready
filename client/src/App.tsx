@@ -1,6 +1,12 @@
 import type { ReactNode } from "react"
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 
+import {
+  AuthGuard,
+  CreateWorkspaceGuard,
+  GuestGuard,
+  WorkspaceGuard,
+} from "@/components/layouts/auth-guards"
 import LayoutSidebar from "@/components/layouts/sidebar-page-layout"
 import { sidebarFooterMenus, sidebarMenus } from "@/components/layouts/sidebar-menus"
 import {
@@ -10,17 +16,13 @@ import {
 import NotFoundPage from "@/pages/not-found/page"
 import SettingsLayout from "@/pages/settings/settings-layout"
 import SettingsProfilePage from "@/pages/settings/pages/profile/page"
+import SettingsWorkspacePage from "@/pages/settings/pages/workspace/page"
 import AppearanceSettingsPage from "@/pages/settings/pages/appearance/page"
-import WebhookSettingsPage from "@/pages/settings/pages/webhook/page"
 import ApiKeySettingsPage from "@/pages/settings/pages/api-key/page"
-import BrandChannelsSettingsPage from "@/pages/settings/pages/brand-channels/page"
-import BillingSettingsPage from "@/pages/settings/pages/billing/page"
-import SecuritySettingsPage from "@/pages/settings/pages/security/page"
-import NotificationSettingsPage from "@/pages/settings/pages/notification/page"
-import IntegrationsSettingsPage from "@/pages/settings/pages/integrations/page"
-import AttributesSettingsPage from "@/pages/settings/pages/attributes/page"
 import MembersSettingsPage from "@/pages/settings/pages/members/page"
+import SessionsSettingsPage from "@/pages/settings/pages/sessions/page"
 import LoginPage from "@/pages/login/page"
+import CreateWorkspacePage from "@/pages/create-workspace/page"
 import SignupPage from "@/pages/signup/page"
 import OnboardingPage from "./pages/onboarding/page"
 import ApiUsagePage from "@/pages/api-usage/page"
@@ -49,59 +51,71 @@ const routableFooterMenus = sidebarFooterMenus.filter((menu) =>
 
 const settingsRouteElements = {
   "/settings/profile": <SettingsProfilePage />,
+  "/settings/workspace": <SettingsWorkspacePage />,
   "/settings/appearance": <AppearanceSettingsPage />,
-  "/settings/webhooks": <WebhookSettingsPage />,
   "/settings/api-key": <ApiKeySettingsPage />,
-  "/settings/communication": <BrandChannelsSettingsPage />,
-  "/settings/billing": <BillingSettingsPage />,
-  "/settings/security": <SecuritySettingsPage />,
-  "/settings/notifications": <NotificationSettingsPage />,
-  "/settings/integrations": <IntegrationsSettingsPage />,
-  "/settings/attributes": <AttributesSettingsPage />,
   "/settings/members": <MembersSettingsPage />,
+  "/settings/sessions": <SessionsSettingsPage />,
 } satisfies Record<SettingsSidebarPath, ReactNode>
 
 export function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LayoutSidebar />}>
-          <Route index element={<Navigate to="/ask-mimo" replace />} />
-          {sidebarMenus
-            .filter((menu) => menu.path !== "/settings")
-            .map((menu) => (
-              <Route
-                key={menu.path}
-                path={menu.path.replace(/^\//, "")}
-                element={
-                  routeElements[menu.path] ?? <PageTitle title={menu.title} />
-                }
-              />
-            ))}
-          {routableFooterMenus.map((menu) => (
-            <Route
-              key={menu.path}
-              path={menu.path.replace(/^\//, "")}
-              element={
-                routeElements[menu.path] ?? <PageTitle title={menu.title} />
-              }
-            />
-          ))}
-          <Route path="settings" element={<SettingsLayout />}>
-            <Route index element={<Navigate to="profile" replace />} />
-            {settingsSidebarMenu.map((menu) => (
-              <Route
-                key={menu.path}
-                path={menu.path.replace("/settings/", "")}
-                element={settingsRouteElements[menu.path]}
-              />
-            ))}
-          </Route>
-          <Route path="*" element={<NotFoundPage />} />
+        <Route element={<GuestGuard />}>
+          <Route path="login" element={<LoginPage />} />
+          <Route path="signup" element={<SignupPage />} />
         </Route>
-        <Route path="onboarding" element={<OnboardingPage />} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="signup" element={<SignupPage />} />
+
+        <Route element={<AuthGuard />}>
+          <Route path="create-workspace" element={<CreateWorkspaceGuard />}>
+            <Route index element={<CreateWorkspacePage />} />
+          </Route>
+
+          <Route element={<WorkspaceGuard />}>
+            <Route path="/" element={<LayoutSidebar />}>
+              <Route index element={<Navigate to="/ask-mimo" replace />} />
+              {sidebarMenus
+                .filter((menu) => menu.path !== "/settings")
+                .map((menu) => (
+                  <Route
+                    key={menu.path}
+                    path={menu.path.replace(/^\//, "")}
+                    element={
+                      routeElements[menu.path] ?? (
+                        <PageTitle title={menu.title} />
+                      )
+                    }
+                  />
+                ))}
+              {routableFooterMenus.map((menu) => (
+                <Route
+                  key={menu.path}
+                  path={menu.path.replace(/^\//, "")}
+                  element={
+                    routeElements[menu.path] ?? (
+                      <PageTitle title={menu.title} />
+                    )
+                  }
+                />
+              ))}
+              <Route path="settings" element={<SettingsLayout />}>
+                <Route index element={<Navigate to="profile" replace />} />
+                {settingsSidebarMenu.map((menu) => (
+                  <Route
+                    key={menu.path}
+                    path={menu.path.replace("/settings/", "")}
+                    element={settingsRouteElements[menu.path]}
+                  />
+                ))}
+              </Route>
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+            <Route path="onboarding" element={<OnboardingPage />} />
+          </Route>
+        </Route>
+
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   )

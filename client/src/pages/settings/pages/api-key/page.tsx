@@ -1,6 +1,10 @@
+import { useState } from "react"
+
 import { ApiKeyDialog, ApiKeyTable } from "./components"
 
 export default function ApiKeySettingsPage() {
+  const [refreshKey, setRefreshKey] = useState(0)
+
   return (
     <div className="space-y-6 max-w-2xl p-4 py-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -12,9 +16,9 @@ export default function ApiKeySettingsPage() {
             traffic.
           </p>
         </div>
-        <ApiKeyDialog />
+        <ApiKeyDialog onCreated={() => setRefreshKey((value) => value + 1)} />
       </div>
-      <ApiKeyTable />
+      <ApiKeyTable refreshKey={refreshKey} />
     </div>
   )
 }
